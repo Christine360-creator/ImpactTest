@@ -4,28 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Community Activity Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             background: #f6f8fa; 
-            padding: 40px; 
+            padding: 40px 20px; 
             color: #24292f; 
         }
         h1 { text-align: center; color: #1f2328; margin-bottom: 5px; }
         .subtitle { text-align: center; color: #57606a; margin-bottom: 40px; font-size: 1rem; }
         
-        /* Fixed sizing container prevents the chart from shrinking loop */
-        .chart-container { 
-            position: relative;
-            background: white; 
-            border: 1px solid #d0d7de; 
-            border-radius: 6px; 
-            padding: 24px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            max-width: 900px; 
+        /* This keeps the chart box neat, padded, and centered */
+        .chart-frame-wrapper {
+            max-width: 850px;
             margin: 0 auto;
-            height: 450px; 
+            background: white;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* This forces the Google iframe to stretch completely to the box limits without breaking */
+        .chart-frame-wrapper iframe {
+            width: 100%;
+            height: 450px;
+            border: none;
         }
     </style>
 </head>
@@ -34,92 +38,9 @@
     <h1>Community Activity Impact</h1>
     <div class="subtitle">Live tracking of total participation and calculated hours</div>
 
-    <div class="chart-container">
-        <canvas id="impactChart"></canvas>
+    <div class="chart-frame-wrapper">
+        <iframe seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vR0KvQPuj7kqg44bWlmsTiMczMUmjUt7NSlC7diUEf-NnZXYOYKe4s323ZqHPZ5A_TvCuVq2zfaQyA_/pubchart?oid=1134898723&amp;format=interactive"></iframe>
     </div>
 
-    <script>
-        // ⚠️ PASTE YOUR GOOGLE SHEET PUBLISHED CSV LINK BETWEEN THE QUOTES BELOW
-        const csvUrl = "PASTE_YOUR_PUBLISHED_CSV_LINK_HERE";
-
-        async function renderChart() {
-            try {
-                const response = await fetch(csvUrl);
-                const data = await response.text();
-                
-                // Splitting rows and filtering out empty lines entirely
-                const rows = data.split('\n')
-                                 .map(r => r.trim())
-                                 .filter(r => r.length > 0 && !r.startsWith(','));
-                
-                // Skip the header row
-                const cleanRows = rows.slice(1);
-                
-                const labels = [];
-                const peopleData = [];
-                const hoursData = [];
-
-                cleanRows.forEach(row => {
-                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    if(cols.length < 3) return;
-                    
-                    const name = cols[0].replace(/"/g, "").trim();
-                    const totalPeople = parseInt(cols[1]);
-                    const totalHours = parseInt(cols[2]);
-                    
-                    // Skip if the activity name is completely empty or not a real row
-                    if (!name || isNaN(totalPeople)) return;
-                    
-                    labels.push(name);
-                    peopleData.push(totalPeople);
-                    hoursData.push(totalHours);
-                });
-
-                const ctx = document.getElementById('impactChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Total People Participating',
-                                data: peopleData,
-                                backgroundColor: '#0969da', 
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Total Calculated Hours',
-                                data: hoursData,
-                                backgroundColor: '#2da44e', 
-                                borderRadius: 4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Forces it to obey our container height
-                        animations: {
-                            y: {
-                                duration: 1500, 
-                                from: 0
-                            }
-                        },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#eaeef2' } },
-                            x: { grid: { display: false } }
-                        },
-                        plugins: {
-                            legend: { labels: { font: { weight: 'bold' } } }
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error('Error rendering chart:', error);
-            }
-        }
-
-        renderChart();
-    </script>
 </body>
 </html>
