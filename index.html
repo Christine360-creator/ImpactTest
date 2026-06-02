@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Activity Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f6f8fa; 
+            padding: 40px; 
+            color: #24292f; 
+        }
+        h1 { text-align: center; color: #1f2328; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #57606a; margin-bottom: 40px; font-size: 1rem; }
+        .chart-container { 
+            background: white; 
+            border: 1px solid #d0d7de; 
+            border-radius: 6px; 
+            padding: 24px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            max-width: 900px; 
+            margin: 0 auto; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Community Activity Impact</h1>
+    <div class="subtitle">Live tracking of total participation and calculated hours</div>
+
+    <div class="chart-container">
+        <canvas id="impactChart"></canvas>
+    </div>
+
+    <script>
+        // ⚠️ PASTE YOUR GOOGLE SHEET PUBLISHED CSV LINK BETWEEN THE QUOTES BELOW
+        const csvUrl = "https://docs.google.com/spreadsheets/d/1XuiBRW95gKI_VxA_Y6V7Mvz7wbvAHZWpAyEiNcFl6YA/edit?usp=sharing";
+
+        async function renderChart() {
+            try {
+                const response = await fetch(csvUrl);
+                const data = await response.text();
+                const rows = data.split('\n').map(r => r.trim()).filter(r => r.length > 0).slice(1);
+                
+                const labels = [];
+                const peopleData = [];
+                const hoursData = [];
+
+                rows.forEach(row => {
+                    const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    if(cols.length < 3) return;
+                    
+                    labels.push(cols[0].replace(/"/g, "").trim());
+                    peopleData.push(parseInt(cols[1]) || 0);
+                    hoursData.push(parseInt(cols[2]) || 0);
+                });
+
+                const ctx = document.getElementById('impactChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Total People Participating',
+                                data: peopleData,
+                                backgroundColor: '#0969da', 
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Total Calculated Hours',
+                                data: hoursData,
+                                backgroundColor: '#2da44e', 
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        animations: {
+                            y: {
+                                duration: 2000, 
+                                from: 0
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#eaeef2' } },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { labels: { font: { weight: 'bold' } } }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error rendering chart:', error);
+            }
+        }
+
+        renderChart();
+    </script>
+</body>
+</html>
